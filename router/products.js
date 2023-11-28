@@ -22,7 +22,6 @@ router.post('/', (req, res) => {
   }
 
   const newProduct = {
-    id: productManager.getNextId(),
     title,
     description,
     code,
