@@ -1,42 +1,62 @@
 // carts.js
+const express = require('express');
+const router = express.Router();
+const CartManager = require('./CartManager');
 
-// Función para generar identificadores únicos
-function generateUniqueId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+const cartManager = new CartManager();
+
+router.post('/', async (req, res) => {
+  try {
+    await cartManager.createCart();
+    res.status(201).json({ message: 'Carrito creado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-  
-  const express = require('express');
-  const router = express.Router();
-  const fs = require('fs');
-  
-  router.post('/', (req, res) => {
+});
 
-    const { products = [] } = req.body;
-  
-    const newCart = {
-      id: generateUniqueId(), 
-      products,
-    };
-  
-  
-  
-    res.status(201).json(newCart);
-  });
-  
-  router.get('/:cid', (req, res) => {
+router.get('/:cid', async (req, res) => {
+  const cid = parseInt(req.params.cid);
+  try {
+    const cart = await cartManager.getCartById(cid);
+    if (typeof cart === 'string') {
+      res.status(404).json({ error: cart });
+    } else {
+      res.json(cart);
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
-    const cid = req.params.cid;
+router.post('/:cid/product/:pid', async (req, res) => {
+  const cid = parseInt(req.params.cid);
+  const pid = parseInt(req.params.pid);
+  const { quantity } = req.body;
+  
+  try {
+    const result = await cartManager.addProdToCart(cid, pid, quantity);
+    if (typeof result === 'string') {
+      res.status(400).json({ error: result });
+    } else {
+      res.json({ message: result });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
-  });
-  
-  router.post('/:cid/product/:pid', (req, res) => {
+router.delete('/:cid', async (req, res) => {
+  const cid = parseInt(req.params.cid);
+  try {
+    const result = await cartManager.deleteCart(cid);
+    if (typeof result === 'string') {
+      res.status(404).json({ error: result });
+    } else {
+      res.json({ message: result });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
-    const cid = req.params.cid;
-    const pid = req.params.pid;
-    const { quantity = 1 } = req.body;
-  
-
-  });
-  
-  module.exports = router;
-  
+module.exports = router;
